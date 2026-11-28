@@ -1,6 +1,6 @@
 import './style.css'
 import { muteAudio, play, unlockAudio } from './audio'
-import { completedGroups, discard, held, startRound } from './game'
+import { completedGroups, defaultDrawLimit, discard, drawLimits, held, startRound } from './game'
 import type { Group, Round, Tile } from './game'
 
 const hand = document.querySelector<HTMLDivElement>('#hand')!
@@ -12,6 +12,9 @@ const player = document.querySelector('#player')!
 const legend = document.querySelector<HTMLDivElement>('#legend')!
 const again = document.querySelector<HTMLButtonElement>('#again')!
 const sound = document.querySelector<HTMLButtonElement>('#sound')!
+const openSettings = document.querySelector<HTMLButtonElement>('#open-settings')!
+const settings = document.querySelector<HTMLDialogElement>('#settings')!
+const drawLimitSelect = document.querySelector<HTMLSelectElement>('#draw-limit')!
 const numerals = '一二三四五六七八九'
 const storagePrefix = import.meta.env.MODE === 'pages-test'
   ? `mahjong5.test.pr-${import.meta.env.VITE_TEST_PR || 'local'}.`
@@ -28,6 +31,7 @@ function save(key: string, value: string) {
 let totalWins = Number(read('wins'))
 if (!Number.isSafeInteger(totalWins) || totalWins < 0) totalWins = 0
 let soundOn = read('sound') !== 'off'
+let drawLimit = drawLimits.find(limit => String(limit) === read('drawLimit')) ?? defaultDrawLimit
 let round: Round
 
 function renderSound() {
@@ -84,7 +88,7 @@ function showRound(previousGroups: Map<string, Group>, delay: number, playDraw: 
     totalWins++
     save('wins', String(totalWins))
   }
-  remaining.textContent = String(round.wall.length)
+  remaining.textContent = String(round.phase === 'playing' ? round.remainingDraws : 0)
   wins.textContent = String(totalWins)
   status.textContent = round.phase === 'won' ? '和了！' : round.phase === 'draw' ? '流局' : ''
   player.classList.toggle('won', round.phase === 'won')
@@ -101,7 +105,7 @@ function showRound(previousGroups: Map<string, Group>, delay: number, playDraw: 
 }
 
 function newRound(playDraw: boolean) {
-  round = startRound()
+  round = startRound(undefined, drawLimit)
   discards.replaceChildren()
   showRound(new Map(), 0, playDraw)
 }
@@ -157,6 +161,18 @@ again.addEventListener('click', event => {
   newRound(true)
   if (event.detail === 0) (hand.querySelector('button') ?? again).focus()
 })
+
+drawLimitSelect.replaceChildren(...drawLimits.map(limit =>
+  new Option(limit === 32 ? '山がなくなるまで（32 回）' : `${limit} 回`, String(limit)),
+))
+drawLimitSelect.value = String(drawLimit)
+drawLimitSelect.addEventListener('change', () => {
+  const selected = drawLimits.find(limit => String(limit) === drawLimitSelect.value)
+  if (selected === undefined) return
+  drawLimit = selected
+  save('drawLimit', String(drawLimit))
+})
+openSettings.addEventListener('click', () => settings.showModal())
 
 sound.addEventListener('click', () => {
   soundOn = !soundOn

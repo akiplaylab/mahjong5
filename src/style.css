@@ -36,7 +36,7 @@ h1 {
   line-height: 1.15;
 }
 h2 { margin: 0; font-size: .875rem; font-weight: 650; color: #4e5952; }
-.sound {
+.settings-button {
   min-height: 44px;
   padding: 0 14px;
   border-radius: 6px;
@@ -45,6 +45,28 @@ h2 { margin: 0; font-size: .875rem; font-weight: 650; color: #4e5952; }
   color: inherit;
   white-space: nowrap;
 }
+#open-settings { display: grid; place-items: center; min-width: 44px; padding: 0; }
+#settings {
+  width: min(320px, calc(100% - 24px));
+  padding: 20px;
+  border: 1px solid #cbd2cd;
+  border-radius: 8px;
+  color: inherit;
+}
+#settings::backdrop { background: #222a2566; }
+#settings h2 { font-size: 1.125rem; }
+#settings form { display: inline; margin-inline-start: 8px; }
+.settings-draw-limit { display: grid; gap: 6px; margin-block: 16px; }
+.settings-draw-limit select {
+  min-height: 44px;
+  padding-inline: 8px;
+  border: 1px solid #cbd2cd;
+  border-radius: 6px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+}
+.settings-draw-limit p { margin: 0; color: #4e5952; font-size: .875rem; }
 .stats {
   display: flex;
   flex-wrap: wrap;

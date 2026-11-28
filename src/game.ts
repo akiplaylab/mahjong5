@@ -3,12 +3,17 @@ export type Group = { kind: 'pair' | 'meld'; tiles: Tile[] }
 export type Win = { pair: Group; meld: Group }
 export type Round = {
   wall: Tile[]
+  remainingDraws: number
   hand: Tile[]
   drawn: Tile | undefined
   discards: Tile[]
   win: Win | undefined
   phase: 'playing' | 'won' | 'draw'
 }
+
+export const defaultDrawLimit = 10
+export const drawLimits = [5, defaultDrawLimit, 15, 20, 32] as const
+export type DrawLimit = typeof drawLimits[number]
 
 export function makeWall(random = Math.random): Tile[] {
   const wall = Array.from({ length: 36 }, (_, id) => ({ id, rank: Math.floor(id / 4) + 1 }))
@@ -69,15 +74,19 @@ export function completedGroups(tiles: Tile[]): Map<string, Group> {
   return groups
 }
 
-function draw(hand: Tile[], wall: Tile[], discards: Tile[]): Round {
+function draw(hand: Tile[], wall: Tile[], discards: Tile[], remainingDraws: number): Round {
+  if (remainingDraws === 0) {
+    return { hand, wall, discards, remainingDraws, drawn: undefined, win: undefined, phase: 'draw' }
+  }
   const [drawn, ...remaining] = wall
-  const win = drawn ? findWin([...hand, drawn]) : undefined
-  return { hand, drawn, wall: remaining, discards, win,
-    phase: win ? 'won' : drawn ? 'playing' : 'draw' }
+  const win = findWin([...hand, drawn])
+  return { hand, drawn, wall: remaining, discards, win, remainingDraws: remainingDraws - 1,
+    phase: win ? 'won' : 'playing' }
 }
 
-export function startRound(wall = makeWall()) {
-  return draw(sorted(wall.slice(0, 4)), wall.slice(4), [])
+export function startRound(wall = makeWall(), drawLimit: DrawLimit = defaultDrawLimit) {
+  const remaining = wall.slice(4)
+  return draw(sorted(wall.slice(0, 4)), remaining, [], Math.min(drawLimit, remaining.length))
 }
 
 export function discard(round: Round, id: number): Round {
@@ -85,5 +94,10 @@ export function discard(round: Round, id: number): Round {
   const tiles = held(round)
   const tile = tiles.find(item => item.id === id)
   if (!tile) return round
-  return draw(sorted(tiles.filter(item => item.id !== id)), round.wall, [...round.discards, tile])
+  return draw(
+    sorted(tiles.filter(item => item.id !== id)),
+    round.wall,
+    [...round.discards, tile],
+    round.remainingDraws,
+  )
 }
