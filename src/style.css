@@ -17,11 +17,13 @@ button { font: inherit; cursor: pointer; touch-action: manipulation; }
 button:focus-visible { outline: 3px solid #23704d; outline-offset: 2px; }
 [hidden] { display: none !important; }
 .table {
+  --table-padding: clamp(12px, 4vw, 36px);
   width: min(100%, 720px);
-  padding: clamp(12px, 4vw, 36px);
+  padding-top: var(--table-padding);
   background: #fff;
   border-radius: 8px;
 }
+.top, .stats { margin-inline: var(--table-padding); }
 .top, .player-head {
   display: flex;
   align-items: center;
@@ -46,10 +48,9 @@ h2 { margin: 0; font-size: .875rem; font-weight: 650; color: #4e5952; }
 .stats {
   display: flex;
   flex-wrap: wrap;
-  margin: clamp(16px, 4vw, 28px) 0 0;
+  margin-top: clamp(16px, 4vw, 28px);
   padding-bottom: 14px;
   gap: 6px clamp(16px, 5vw, 32px);
-  border-bottom: 1px solid #dce1dd;
 }
 .stats > div {
   display: flex;
@@ -59,9 +60,10 @@ h2 { margin: 0; font-size: .875rem; font-weight: 650; color: #4e5952; }
   font-size: .875rem;
 }
 .stats strong { color: #222a25; font-size: 1.125rem; font-variant-numeric: tabular-nums; }
-.tray {
-  padding: 16px 0;
-  border-bottom: 1px solid #dce1dd;
+.play-area {
+  padding: 16px var(--table-padding) var(--table-padding);
+  background: #dce9df;
+  border-radius: 0 0 8px 8px;
 }
 .discards {
   display: grid;
