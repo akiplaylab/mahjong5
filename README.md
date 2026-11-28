@@ -42,4 +42,18 @@ npm run preview
 
 ## GitHub Pages への公開
 
-GitHub Actions は main の更新時にテストとビルドを実行し、成功すると dist/ を GitHub Pages に公開します。本番ビルドとローカルプレビューのパスは /mahjong5/ です。
+GitHub Actions は [本番](https://akiplaylab.github.io/mahjong5/) に `main` を公開し、同じリポジトリから `main` へのオープン PR を `/mahjong5/test/pr-<PR 番号>/` に公開します。main への push と PR の作成・更新・再オープン・クローズ時に本番とテスト環境一覧を更新します。Actions の「Deploy to GitHub Pages」は `main` を選んで手動実行できます。
+
+### 受け入れテスト
+
+1. PR の作成・更新後に、Actions の「Deploy to GitHub Pages」で公開結果を確認します。ビルドに失敗した PR は一覧から外れます。
+2. iPhone・iPad・PC のブラウザーで [テスト環境一覧](https://akiplaylab.github.io/mahjong5/test/) から対象 PR を開き、画面の `TEST · PR #番号 · 短縮 SHA` が確認対象のコミットと一致することを確認します。
+3. 対象の変更を試し、必要に応じて牌の表示、打牌、音の設定を確認します。累計和了回数と音の設定は本番と各 PR で別々に保存されます。
+4. 受け入れ後に GitHub で PR を手動マージし、本番に反映されたことと、対象 PR がテスト環境一覧から消えたことを確認します。
+
+ローカルで PR ビルドを試す場合は、以下のように実行し、`/mahjong5/test/pr-5/` を開きます。
+
+```sh
+VITE_TEST_PR=5 VITE_TEST_SHA=0123456789abcdef npm run build:test
+VITE_TEST_PR=5 npm run preview -- --mode pages-test
+```
