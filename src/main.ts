@@ -44,11 +44,11 @@ function tileFace(tile: Tile, interactive = false) {
     face.setAttribute('role', 'img')
     face.setAttribute('aria-label', name)
   }
-  const rank = document.createElement('span')
-  rank.textContent = name[0]
-  const suit = document.createElement('span')
-  suit.textContent = '萬'
-  face.append(rank, suit)
+  const image = document.createElement('img')
+  image.src = new URL(`./tiles/man${tile.rank}-66-90-l.png`, import.meta.url).href
+  image.alt = ''
+  image.draggable = false
+  face.append(image)
   return face
 }
 
