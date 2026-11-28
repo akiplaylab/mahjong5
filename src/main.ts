@@ -11,11 +11,17 @@ const status = document.querySelector('#status')!
 const player = document.querySelector('#player')!
 const legend = document.querySelector<HTMLDivElement>('#legend')!
 const again = document.querySelector<HTMLButtonElement>('#again')!
-const sound = document.querySelector<HTMLButtonElement>('#sound')!
 const openSettings = document.querySelector<HTMLButtonElement>('#open-settings')!
 const settings = document.querySelector<HTMLDialogElement>('#settings')!
-const drawLimitSelect = document.querySelector<HTMLSelectElement>('#draw-limit')!
 const numerals = '一二三四五六七八九'
+const tileSuits = [
+  { id: 'man', label: '萬子', suffix: '萬' },
+  { id: 'pin', label: '筒子', suffix: '筒' },
+  { id: 'sou', label: '索子', suffix: '索' },
+] as const
+const tileImages = import.meta.glob<string>('./tiles/*.svg', {
+  eager: true, query: '?url', import: 'default',
+})
 const storagePrefix = import.meta.env.MODE === 'pages-test'
   ? `mahjong5.test.pr-${import.meta.env.VITE_TEST_PR || 'local'}.`
   : 'mahjong5.'
@@ -32,29 +38,51 @@ let totalWins = Number(read('wins'))
 if (!Number.isSafeInteger(totalWins) || totalWins < 0) totalWins = 0
 let soundOn = read('sound') !== 'off'
 let drawLimit = drawLimits.find(limit => String(limit) === read('drawLimit')) ?? defaultDrawLimit
+let tileSuit = tileSuits.find(suit => suit.id === read('tileSuit')) ?? tileSuits[0]
 let round: Round
 
-function renderSound() {
-  sound.textContent = soundOn ? '音 ON' : '音 OFF'
-  sound.setAttribute('aria-pressed', String(soundOn))
+function renderSetting<T>(
+  name: string,
+  options: readonly T[],
+  selected: T,
+  label: (option: T) => string | Node,
+  onChange: (option: T) => void,
+) {
+  const group = document.getElementById(name)!
+  group.replaceChildren(...options.map(option => {
+    const choice = document.createElement('label')
+    const input = document.createElement('input')
+    input.type = 'radio'
+    input.name = name
+    input.checked = option === selected
+    input.addEventListener('change', () => {
+      if (input.checked) onChange(option)
+    })
+    choice.append(input, label(option))
+    return choice
+  }))
+}
+
+function updateTileFace(face: HTMLElement, image: HTMLImageElement, rank: number) {
+  const name = numerals[rank - 1] + tileSuit.suffix
+  face.setAttribute('aria-label', face instanceof HTMLButtonElement ? name + 'を捨てる' : name)
+  image.src = tileImages[`./tiles/${tileSuit.id}${rank}.svg`]
 }
 
 function tileFace(tile: Tile, interactive = false) {
-  const name = numerals[tile.rank - 1] + '萬'
   const face = document.createElement(interactive ? 'button' : 'span')
   face.className = 'tile'
   face.dataset.id = String(tile.id)
+  face.dataset.rank = String(tile.rank)
   if (face instanceof HTMLButtonElement) {
     face.type = 'button'
-    face.setAttribute('aria-label', name + 'を捨てる')
   } else {
     face.setAttribute('role', 'img')
-    face.setAttribute('aria-label', name)
   }
   const image = document.createElement('img')
-  image.src = new URL(`./tiles/man${tile.rank}.svg`, import.meta.url).href
   image.alt = ''
   image.draggable = false
+  updateTileFace(face, image, tile.rank)
   face.append(image)
   return face
 }
@@ -162,25 +190,31 @@ again.addEventListener('click', event => {
   if (event.detail === 0) (hand.querySelector('button') ?? again).focus()
 })
 
-drawLimitSelect.replaceChildren(...drawLimits.map(limit =>
-  new Option(limit === 32 ? '山がなくなるまで（32 回）' : `${limit} 回`, String(limit)),
-))
-drawLimitSelect.value = String(drawLimit)
-drawLimitSelect.addEventListener('change', () => {
-  const selected = drawLimits.find(limit => String(limit) === drawLimitSelect.value)
-  if (selected === undefined) return
+renderSetting('draw-limit', drawLimits, drawLimit, limit => `${limit} 回`, selected => {
   drawLimit = selected
   save('drawLimit', String(drawLimit))
 })
-openSettings.addEventListener('click', () => settings.showModal())
+renderSetting('tile-suit', tileSuits, tileSuit, suit => {
+  const label = document.createDocumentFragment()
+  const image = document.createElement('img')
+  image.src = tileImages[`./tiles/${suit.id}1.svg`]
+  image.alt = ''
+  label.append(image, suit.label)
+  return label
+}, selected => {
+  tileSuit = selected
+  save('tileSuit', tileSuit.id)
+  for (const face of document.querySelectorAll<HTMLElement>('.tile[data-rank]')) {
+    updateTileFace(face, face.querySelector('img')!, Number(face.dataset.rank))
+  }
+})
 
-sound.addEventListener('click', () => {
-  soundOn = !soundOn
+renderSetting('sound', [true, false], soundOn, enabled => enabled ? 'ON' : 'OFF', enabled => {
+  soundOn = enabled
   save('sound', soundOn ? 'on' : 'off')
-  renderSound()
   if (soundOn) unlockAudio()
   else muteAudio()
 })
 
-renderSound()
+openSettings.addEventListener('click', () => settings.showModal())
 newRound(false)

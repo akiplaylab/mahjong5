@@ -43,14 +43,21 @@
   </main>
   <dialog id="settings" aria-labelledby="settings-title">
     <h2 id="settings-title">設定</h2>
-    <div class="settings-draw-limit">
-      <label for="draw-limit">最大ツモ回数</label>
-      <select id="draw-limit" aria-describedby="draw-limit-note"></select>
-      <p id="draw-limit-note">次の局から反映されます。</p>
-    </div>
-    <button id="sound" class="settings-button" type="button" aria-pressed="true">音 ON</button>
+    <fieldset class="settings-field" aria-describedby="draw-limit-note">
+      <legend>最大ツモ回数</legend>
+      <div id="draw-limit" class="settings-options"></div>
+      <p id="draw-limit-note">32 回は山がなくなるまで。次の局から反映されます。</p>
+    </fieldset>
+    <fieldset class="settings-field">
+      <legend>牌の種類</legend>
+      <div id="tile-suit" class="settings-options"></div>
+    </fieldset>
+    <fieldset class="settings-field">
+      <legend>効果音</legend>
+      <div id="sound" class="settings-options"></div>
+    </fieldset>
     <form method="dialog">
-      <button class="settings-button" type="submit">閉じる</button>
+      <button class="settings-button" type="submit" autofocus>閉じる</button>
     </form>
   </dialog>
   <script type="module" src="/src/main.ts"></script>
