@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#142421">
+  <meta name="theme-color" content="#f3f4f2">
   <title>Mahjong5</title>
 </head>
 <body>
   <main class="table">
     <header class="top">
-      <h1>Mahjong<span>5</span></h1>
+      <h1>Mahjong5</h1>
       <button id="sound" class="sound" type="button" aria-pressed="true">音 ON</button>
     </header>
 
@@ -18,20 +18,22 @@
       <div><span>累計和了</span><strong id="wins"></strong></div>
     </div>
 
-    <section class="tray" aria-labelledby="discard-title">
-      <h2 id="discard-title">捨て牌</h2>
-      <div id="discards" class="discards"></div>
-    </section>
+    <div class="play-area">
+      <section class="tray" aria-labelledby="discard-title">
+        <h2 id="discard-title">捨て牌</h2>
+        <div id="discards" class="discards"></div>
+      </section>
 
-    <section id="player" class="player" aria-labelledby="hand-title">
-      <div class="player-head">
-        <h2 id="hand-title">手牌</h2>
-        <p id="status" role="status"></p>
-      </div>
-      <div id="hand" class="hand"></div>
-      <div id="legend" class="legend" hidden><span>面子</span><span>雀頭</span></div>
-      <button id="again" class="again" type="button" hidden>もう一度</button>
-    </section>
+      <section id="player" class="player" aria-labelledby="hand-title">
+        <div class="player-head">
+          <h2 id="hand-title">手牌</h2>
+          <p id="status" role="status"></p>
+        </div>
+        <div id="hand" class="hand"></div>
+        <div id="legend" class="legend" hidden><span>面子</span><span>雀頭</span></div>
+        <button id="again" class="again" type="button" hidden>もう一度</button>
+      </section>
+    </div>
   </main>
   <script type="module" src="/src/main.ts"></script>
 </body>
