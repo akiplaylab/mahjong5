@@ -55,18 +55,27 @@ h2 { margin: 0; font-size: .875rem; font-weight: 650; color: #4e5952; }
 }
 #settings::backdrop { background: #222a2566; }
 #settings h2 { font-size: 1.125rem; }
-#settings form { display: inline; margin-inline-start: 8px; }
-.settings-field { display: grid; gap: 6px; margin-block: 16px; }
-.settings-field select {
+#settings form { display: flex; justify-content: flex-end; }
+.settings-field { min-inline-size: 0; margin: 16px 0; padding: 0; border: 0; }
+.settings-field legend { margin-bottom: 6px; padding: 0; font-weight: 650; }
+.settings-options { display: flex; flex-wrap: wrap; gap: 6px; }
+.settings-options label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   min-height: 44px;
   padding-inline: 8px;
   border: 1px solid #cbd2cd;
   border-radius: 6px;
   background: #fff;
-  color: inherit;
-  font: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+  white-space: nowrap;
 }
-.settings-field p { margin: 0; color: #4e5952; font-size: .875rem; }
+.settings-options input { margin: 0; accent-color: #23704d; }
+.settings-options label:has(:checked) { border-color: #23704d; background: #e6f1e9; font-weight: 650; }
+.settings-options label:has(:focus-visible) { outline: 3px solid #23704d; outline-offset: 2px; }
+.settings-field p { margin: 6px 0 0; color: #4e5952; font-size: .875rem; }
 .stats {
   display: flex;
   flex-wrap: wrap;
