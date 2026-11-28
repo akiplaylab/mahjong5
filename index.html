@@ -10,11 +10,11 @@
   <main class="table">
     <header class="top">
       <h1>Mahjong5</h1>
-      <button id="sound" class="sound" type="button" aria-pressed="true">音 ON</button>
+      <button id="open-settings" class="settings-button" type="button" aria-label="設定" aria-haspopup="dialog">⚙</button>
     </header>
 
     <div class="stats">
-      <div><span>山の残り</span><strong id="remaining"></strong></div>
+      <div><span>残りツモ</span><strong id="remaining"></strong></div>
       <div><span>累計和了</span><strong id="wins"></strong></div>
     </div>
 
@@ -35,6 +35,18 @@
       </section>
     </div>
   </main>
+  <dialog id="settings" aria-labelledby="settings-title">
+    <h2 id="settings-title">設定</h2>
+    <div class="settings-draw-limit">
+      <label for="draw-limit">最大ツモ回数</label>
+      <select id="draw-limit" aria-describedby="draw-limit-note"></select>
+      <p id="draw-limit-note">次の局から反映されます。</p>
+    </div>
+    <button id="sound" class="settings-button" type="button" aria-pressed="true">音 ON</button>
+    <form method="dialog">
+      <button class="settings-button" type="submit">閉じる</button>
+    </form>
+  </dialog>
   <script type="module" src="/src/main.ts"></script>
 </body>
 </html>

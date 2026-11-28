@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { completedGroups, discard, findWin, held, makeWall, startRound } from '../src/game.ts'
+import { completedGroups, discard, drawLimits, findWin, held, makeWall, startRound } from '../src/game.ts'
 
 const tiles = ranks => ranks.map((rank, id) => ({ id, rank }))
 
@@ -56,6 +56,35 @@ test('the last nonwinning draw stays actionable and the next discard ends the ro
   assert.equal(held(ended).length, 4)
   assert.deepEqual(ended.discards, [round.drawn])
   assert.equal(discard(ended, ended.hand[0].id), ended)
+})
+
+test('the default is ten draws and each selectable limit counts the automatic first draw', () => {
+  const wall = makeWall(() => 0.5)
+  assert.deepEqual(drawLimits, [5, 10, 15, 20, 32])
+  assert.equal(startRound(wall).remainingDraws, 9)
+  const nonwinningWall = tiles([1, 2, 5, 7, ...wall.slice(4).map(tile => tile.rank)])
+  for (const limit of drawLimits) {
+    let round = startRound(nonwinningWall, limit)
+    for (let drawn = 1; drawn <= limit; drawn++) {
+      assert.equal(round.phase, 'playing')
+      assert.equal(round.remainingDraws, limit - drawn)
+      assert.equal(round.drawn, nonwinningWall[3 + drawn])
+      round = discard(round, round.drawn.id)
+    }
+    assert.equal(round.phase, 'draw')
+    assert.deepEqual(round.wall, nonwinningWall.slice(4 + limit))
+    assert.deepEqual(round.discards, nonwinningWall.slice(4, 4 + limit))
+    assert.equal(held(round).length, 4)
+  }
+})
+
+test('a win on the configured final draw takes priority with tiles still in the wall', () => {
+  const wall = tiles([1, 2, 9, 9, 5, 6, 7, 8, 3, 4])
+  let round = startRound(wall, 5)
+  for (let i = 0; i < 4; i++) round = discard(round, round.drawn.id)
+  assert.equal(round.phase, 'won')
+  assert.equal(round.remainingDraws, 0)
+  assert.deepEqual(round.wall, [wall[9]])
 })
 
 test('recognizes overlapping groups and keeps their keys stable across equivalent copies', () => {
