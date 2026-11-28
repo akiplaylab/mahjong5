@@ -48,7 +48,7 @@ function tileFace(tile: Tile, interactive = false) {
     face.setAttribute('aria-label', name)
   }
   const image = document.createElement('img')
-  image.src = new URL(`./tiles/man${tile.rank}-66-90-l.png`, import.meta.url).href
+  image.src = new URL(`./tiles/man${tile.rank}.svg`, import.meta.url).href
   image.alt = ''
   image.draggable = false
   face.append(image)
