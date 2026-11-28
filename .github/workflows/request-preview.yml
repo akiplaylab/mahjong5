@@ -1,0 +1,13 @@
+name: Request Pages preview
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, closed, edited]
+
+permissions: {}
+
+jobs:
+  request:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Refresh the Pages previews."
