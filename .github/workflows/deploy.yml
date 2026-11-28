@@ -3,16 +3,55 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  workflow_run:
+    workflows: [Request Pages preview]
+    types: [completed]
   workflow_dispatch:
 
 permissions: {}
+
+defaults:
+  run:
+    shell: bash
 
 concurrency:
   group: github-pages
   cancel-in-progress: false
 
+env:
+  PREVIEW_FILTER: 'add | map(select(.head.repo.full_name == $repo) | {number, title, sha: .head.sha}) | sort_by(.number)'
+
 jobs:
-  build:
+  select:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name != 'workflow_run' ||
+        (github.event.workflow_run.event == 'pull_request_target' &&
+         github.event.workflow_run.conclusion == 'success'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      main_sha: ${{ steps.snapshot.outputs.main_sha }}
+      previews: ${{ steps.snapshot.outputs.previews }}
+    steps:
+      - id: snapshot
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          main_sha=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq .object.sha)
+          previews=$(gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/pulls?state=open&base=main&per_page=100" |
+            jq -ce --arg repo "$GITHUB_REPOSITORY" "$PREVIEW_FILTER")
+          printf 'main_sha=%s\npreviews=%s\n' "$main_sha" "$previews" >> "$GITHUB_OUTPUT"
+
+  preview:
+    needs: select
+    if: needs.select.outputs.previews != '[]'
+    strategy:
+      fail-fast: false
+      matrix:
+        preview: ${{ fromJSON(needs.select.outputs.previews) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -20,6 +59,50 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
+          ref: ${{ needs.select.outputs.main_sha }}
+          path: main-source
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ matrix.preview.sha }}
+          path: preview-source
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - working-directory: preview-source
+        env:
+          VITE_TEST_PR: ${{ matrix.preview.number }}
+          VITE_TEST_SHA: ${{ matrix.preview.sha }}
+        run: |
+          node ../main-source/build/prepare-legacy-preview.mjs .
+          npm ci
+          npm test
+          npm run build:test
+          grep -Fq 'name="robots" content="noindex"' dist/index.html
+          grep -Fq "TEST · PR #$VITE_TEST_PR · ${VITE_TEST_SHA:0:7}" dist/index.html
+          grep -Fq "/mahjong5/test/pr-$VITE_TEST_PR/assets/" dist/index.html
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pr-${{ matrix.preview.number }}-${{ matrix.preview.sha }}
+          path: preview-source/dist
+          if-no-files-found: error
+          overwrite: true
+
+  build:
+    needs: [select, preview]
+    if: ${{ !cancelled() && needs.select.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      artifact_name: ${{ steps.artifact.outputs.name }}
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ needs.select.outputs.main_sha }}
           persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
@@ -28,21 +111,51 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+      - if: needs.preview.result != 'skipped'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          pattern: pr-*
+          path: preview-artifacts
+      - env:
+          PREVIEWS: ${{ needs.select.outputs.previews }}
+        run: node build/pages-preview-index.mjs
+      - id: artifact
+        run: echo "name=github-pages-$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9
         with:
           path: dist
+          name: ${{ steps.artifact.outputs.name }}
 
   deploy:
-    needs: build
-    if: github.ref == 'refs/heads/main'
+    needs: [select, build]
+    if: ${{ !cancelled() && needs.build.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
+      contents: read
+      pull-requests: read
       pages: write
       id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - id: freshness
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MAIN_SHA: ${{ needs.select.outputs.main_sha }}
+          PREVIEWS: ${{ needs.select.outputs.previews }}
+        run: |
+          main_sha=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq .object.sha)
+          previews=$(gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/pulls?state=open&base=main&per_page=100" |
+            jq -ce --arg repo "$GITHUB_REPOSITORY" "$PREVIEW_FILTER")
+          if [[ "$main_sha" == "$MAIN_SHA" && "$previews" == "$PREVIEWS" ]]; then
+            echo 'current=true' >> "$GITHUB_OUTPUT"
+          else
+            echo '::notice::The main branch or open previews changed during the build. Skipping deployment.'
+          fi
       - id: deployment
+        if: steps.freshness.outputs.current == 'true'
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346
+        with:
+          artifact_name: ${{ needs.build.outputs.artifact_name }}

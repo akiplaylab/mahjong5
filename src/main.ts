@@ -13,13 +13,16 @@ const legend = document.querySelector<HTMLDivElement>('#legend')!
 const again = document.querySelector<HTMLButtonElement>('#again')!
 const sound = document.querySelector<HTMLButtonElement>('#sound')!
 const numerals = '一二三四五六七八九'
+const storagePrefix = import.meta.env.MODE === 'pages-test'
+  ? `mahjong5.test.pr-${import.meta.env.VITE_TEST_PR || 'local'}.`
+  : 'mahjong5.'
 
 function read(key: string) {
-  try { return localStorage.getItem('mahjong5.' + key) } catch { return null }
+  try { return localStorage.getItem(storagePrefix + key) } catch { return null }
 }
 
 function save(key: string, value: string) {
-  try { localStorage.setItem('mahjong5.' + key, value) } catch {}
+  try { localStorage.setItem(storagePrefix + key, value) } catch {}
 }
 
 let totalWins = Number(read('wins'))
