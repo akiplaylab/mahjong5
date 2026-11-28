@@ -15,7 +15,16 @@ const sound = document.querySelector<HTMLButtonElement>('#sound')!
 const openSettings = document.querySelector<HTMLButtonElement>('#open-settings')!
 const settings = document.querySelector<HTMLDialogElement>('#settings')!
 const drawLimitSelect = document.querySelector<HTMLSelectElement>('#draw-limit')!
+const tileSuitSelect = document.querySelector<HTMLSelectElement>('#tile-suit')!
 const numerals = '一二三四五六七八九'
+const tileSuits = [
+  { id: 'man', label: '萬子', suffix: '萬' },
+  { id: 'pin', label: '筒子', suffix: '筒' },
+  { id: 'sou', label: '索子', suffix: '索' },
+] as const
+const tileImages = import.meta.glob<string>('./tiles/*.svg', {
+  eager: true, query: '?url', import: 'default',
+})
 const storagePrefix = import.meta.env.MODE === 'pages-test'
   ? `mahjong5.test.pr-${import.meta.env.VITE_TEST_PR || 'local'}.`
   : 'mahjong5.'
@@ -32,6 +41,8 @@ let totalWins = Number(read('wins'))
 if (!Number.isSafeInteger(totalWins) || totalWins < 0) totalWins = 0
 let soundOn = read('sound') !== 'off'
 let drawLimit = drawLimits.find(limit => String(limit) === read('drawLimit')) ?? defaultDrawLimit
+let tileSuit = tileSuits.find(suit => suit.id === read('tileSuit')) ?? tileSuits[0]
+let roundSuit = tileSuit
 let round: Round
 
 function renderSound() {
@@ -40,7 +51,7 @@ function renderSound() {
 }
 
 function tileFace(tile: Tile, interactive = false) {
-  const name = numerals[tile.rank - 1] + '萬'
+  const name = numerals[tile.rank - 1] + roundSuit.suffix
   const face = document.createElement(interactive ? 'button' : 'span')
   face.className = 'tile'
   face.dataset.id = String(tile.id)
@@ -52,7 +63,7 @@ function tileFace(tile: Tile, interactive = false) {
     face.setAttribute('aria-label', name)
   }
   const image = document.createElement('img')
-  image.src = new URL(`./tiles/man${tile.rank}.svg`, import.meta.url).href
+  image.src = tileImages[`./tiles/${roundSuit.id}${tile.rank}.svg`]
   image.alt = ''
   image.draggable = false
   face.append(image)
@@ -105,6 +116,7 @@ function showRound(previousGroups: Map<string, Group>, delay: number, playDraw: 
 }
 
 function newRound(playDraw: boolean) {
+  roundSuit = tileSuit
   round = startRound(undefined, drawLimit)
   discards.replaceChildren()
   showRound(new Map(), 0, playDraw)
@@ -171,6 +183,14 @@ drawLimitSelect.addEventListener('change', () => {
   if (selected === undefined) return
   drawLimit = selected
   save('drawLimit', String(drawLimit))
+})
+tileSuitSelect.replaceChildren(...tileSuits.map(suit => new Option(suit.label, suit.id)))
+tileSuitSelect.value = tileSuit.id
+tileSuitSelect.addEventListener('change', () => {
+  const selected = tileSuits.find(suit => suit.id === tileSuitSelect.value)
+  if (!selected) return
+  tileSuit = selected
+  save('tileSuit', tileSuit.id)
 })
 openSettings.addEventListener('click', () => settings.showModal())
 

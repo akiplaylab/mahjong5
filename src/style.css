@@ -56,8 +56,8 @@ h2 { margin: 0; font-size: .875rem; font-weight: 650; color: #4e5952; }
 #settings::backdrop { background: #222a2566; }
 #settings h2 { font-size: 1.125rem; }
 #settings form { display: inline; margin-inline-start: 8px; }
-.settings-draw-limit { display: grid; gap: 6px; margin-block: 16px; }
-.settings-draw-limit select {
+.settings-field { display: grid; gap: 6px; margin-block: 16px; }
+.settings-field select {
   min-height: 44px;
   padding-inline: 8px;
   border: 1px solid #cbd2cd;
@@ -66,7 +66,7 @@ h2 { margin: 0; font-size: .875rem; font-weight: 650; color: #4e5952; }
   color: inherit;
   font: inherit;
 }
-.settings-draw-limit p { margin: 0; color: #4e5952; font-size: .875rem; }
+.settings-field p { margin: 0; color: #4e5952; font-size: .875rem; }
 .stats {
   display: flex;
   flex-wrap: wrap;

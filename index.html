@@ -43,10 +43,14 @@
   </main>
   <dialog id="settings" aria-labelledby="settings-title">
     <h2 id="settings-title">設定</h2>
-    <div class="settings-draw-limit">
+    <div class="settings-field">
       <label for="draw-limit">最大ツモ回数</label>
-      <select id="draw-limit" aria-describedby="draw-limit-note"></select>
-      <p id="draw-limit-note">次の局から反映されます。</p>
+      <select id="draw-limit" aria-describedby="next-round-note"></select>
+    </div>
+    <div class="settings-field">
+      <label for="tile-suit">牌の種類</label>
+      <select id="tile-suit" aria-describedby="next-round-note"></select>
+      <p id="next-round-note">次の局から反映されます。</p>
     </div>
     <button id="sound" class="settings-button" type="button" aria-pressed="true">音 ON</button>
     <form method="dialog">
