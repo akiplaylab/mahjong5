@@ -45,7 +45,7 @@ function renderSetting<T>(
   name: string,
   options: readonly T[],
   selected: T,
-  label: (option: T) => string,
+  label: (option: T) => string | Node,
   onChange: (option: T) => void,
 ) {
   const group = document.getElementById(name)!
@@ -194,7 +194,14 @@ renderSetting('draw-limit', drawLimits, drawLimit, limit => `${limit} 回`, sele
   drawLimit = selected
   save('drawLimit', String(drawLimit))
 })
-renderSetting('tile-suit', tileSuits, tileSuit, suit => suit.label, selected => {
+renderSetting('tile-suit', tileSuits, tileSuit, suit => {
+  const label = document.createDocumentFragment()
+  const image = document.createElement('img')
+  image.src = tileImages[`./tiles/${suit.id}1.svg`]
+  image.alt = ''
+  label.append(image, suit.label)
+  return label
+}, selected => {
   tileSuit = selected
   save('tileSuit', tileSuit.id)
   for (const face of document.querySelectorAll<HTMLElement>('.tile[data-rank]')) {

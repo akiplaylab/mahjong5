@@ -75,6 +75,21 @@ h2 { margin: 0; font-size: .875rem; font-weight: 650; color: #4e5952; }
 .settings-options input { margin: 0; accent-color: #23704d; }
 .settings-options label:has(:checked) { border-color: #23704d; background: #e6f1e9; font-weight: 650; }
 .settings-options label:has(:focus-visible) { outline: 3px solid #23704d; outline-offset: 2px; }
+#tile-suit { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+#tile-suit label {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: center;
+  padding: 6px 4px;
+}
+#tile-suit img {
+  grid-column: span 2;
+  grid-row: 1;
+  justify-self: center;
+  width: 28px;
+  height: 38px;
+  object-fit: contain;
+}
 .settings-field p { margin: 6px 0 0; color: #4e5952; font-size: .875rem; }
 .stats {
   display: flex;
